@@ -31,7 +31,7 @@ from gi.repository import GLib as gobject
 from threading import Thread
 from subprocess import Popen, STDOUT, PIPE, call
 from subprocess import getoutput
-from itertools import repeat, chain
+from itertools import repeat, chain, zip_longest
 from pipes import quote
 import socket
 
