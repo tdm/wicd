@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! /usr/bin/env python3
 
 """ configscript -- Configure the scripts for a particular network.
 
@@ -28,7 +28,10 @@ run as the current user.
 
 import sys
 import os
-import gtk
+
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk as gtk
 
 from wicd import wpath
 from wicd.translations import _
@@ -128,7 +131,7 @@ def main (argv):
 
     script_info = get_script_info(network, network_type)
 
-    gladefile = os.path.join(wpath.gtk, "wicd.ui")
+    gladefile = "wicd.ui" # os.path.join(wpath.gtk, "wicd.ui")
     wTree = gtk.Builder()
     wTree.set_translation_domain('wicd')
     wTree.add_from_file(gladefile)

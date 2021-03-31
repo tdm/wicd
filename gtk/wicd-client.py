@@ -38,16 +38,16 @@ class TrayIcon() -- Parent class of TrayIconGUI and IconConnectionInfo.
 #
 
 import sys
-import gtk
+#import gtk
+import gi
 from gi.repository import GLib as gobject
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk as gtk
+from gi.repository import Pango as pango
 import getopt
 import os
-import pango
 import atexit
 from dbus import DBusException
-
-import pygtk
-pygtk.require('2.0')
 
 USE_APP_INDICATOR = True
 try:
@@ -92,7 +92,7 @@ if __name__ == '__main__':
 daemon = wireless = wired = lost_dbus_id = None
 DBUS_AVAIL = False
 
-theme = gtk.icon_theme_get_default()
+theme = gtk.IconTheme.get_default()
 theme.append_search_path(wpath.images)
 
 
@@ -132,7 +132,7 @@ class NetworkMenuItem(gtk.ImageMenuItem):
             atrlist = pango.AttrList()
             atrlist.insert(pango.AttrWeight(pango.WEIGHT_BOLD, 0, 50))
             self.label.set_attributes(atrlist)
-        self.label.set_justify(gtk.JUSTIFY_LEFT)
+        self.label.set_justify(gtk.Justification.LEFT)
         self.label.set_alignment(0, 0)
         self.add(self.label)
         self.label.show()
@@ -234,20 +234,20 @@ class TrayIcon(object):
             Updates the trayicon tooltip based on current connection status
             """
             if (self.network_type == "none"):
-                self.tr.set_tooltip(_('Not connected'))
+                self.tr.set_tooltip_text(_('Not connected'))
             elif (self.network_type == "wireless"):
-                self.tr.set_tooltip(_('Connected to $A at $B (IP: $C)')
+                self.tr.set_tooltip_text(_('Connected to $A at $B (IP: $C)')
                         .replace('$A', self.network_name)
                         .replace('$B', self.network_str)
                         .replace('$C', self.network_addr))
             elif (self.network_type == "wired"):
-                self.tr.set_tooltip(_('Connected to wired network (IP: $A)')
+                self.tr.set_tooltip_text(_('Connected to wired network (IP: $A)')
                         .replace('$A', self.network_addr))
             elif (self.network_type == "killswitch"):
-                self.tr.set_tooltip(_('Not connected') + "(" +
+                self.tr.set_tooltip_text(_('Not connected') + "(" +
                         _('Wireless Kill Switch Enabled') + ")")
             elif (self.network_type == "no_daemon"):
-                self.tr.set_tooltip(_('Wicd daemon unreachable'))
+                self.tr.set_tooltip_text(_('Wicd daemon unreachable'))
 
             return True
 
@@ -715,7 +715,7 @@ TX:'''))
                     gtk.ICON_SIZE_SMALL_TOOLBAR)
             else:
                 image.set_from_icon_name(self._get_img(n_id),
-                    gtk.ICON_SIZE_SMALL_TOOLBAR)
+                    gtk.IconSize.SMALL_TOOLBAR)
             item.set_image(image)
             del image
             item.connect("activate", network_selected, type_, n_id)
@@ -730,7 +730,7 @@ TX:'''))
             """ Determines which image to use for the wireless entries. """
             def fix_strength(val, default):
                 """ Assigns given strength to a default value if needed. """
-                return val and int(val) or default
+                return val and int(float(val)) or default
 
             def get_prop(prop):
                 return wireless.GetWirelessProperty(net_id, prop)
@@ -945,7 +945,7 @@ TX:'''))
                 self.connect('activate', self.on_activate)
                 self.connect('popup-menu', self.on_popup_menu)
                 self.set_from_name('no-signal')
-                self.set_tooltip("Initializing wicd...")
+                self.set_tooltip_text("Initializing wicd...")
 
             def on_popup_menu(self, status, button, timestamp):
                 """ Opens the right click menu for the tray icon. """

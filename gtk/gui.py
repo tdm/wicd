@@ -27,7 +27,11 @@ import os
 import sys
 import time
 from gi.repository import GLib as gobject
-import gtk
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
+
 from itertools import chain
 from dbus import DBusException
 
@@ -185,15 +189,20 @@ class appGui(object):
 
         self.tray = tray
 
-        gladefile = os.path.join(wpath.gtk, "wicd.ui")
+        gladefile = "wicd.ui" # os.path.join(wpath.gtk, "wicd.ui")
         self.wTree = gtk.Builder()
         self.wTree.set_translation_domain('wicd')
         self.wTree.add_from_file(gladefile)
         self.window = self.wTree.get_object("window1")
-        width = int(gtk.gdk.screen_width() / 2)
+
+        display = gdk.Display.get_default()
+        monitor = display.get_monitor(0) # XXX
+        geo = monitor.get_geometry()
+
+        width = int(geo.width / 2)
         if width > 530:
             width = 530
-        self.window.resize(width, int(gtk.gdk.screen_height() / 1.7))
+        self.window.resize(width, int(geo.height / 1.7))
 
         dic = {
             "refresh_clicked": self.refresh_clicked,
@@ -224,14 +233,14 @@ class appGui(object):
         self.wired_network_box = gtk.VBox(False, 0)
         self.wired_network_box.show_all()
         self.network_list = gtk.VBox(False, 0)
-        self.all_network_list.pack_start(self.wired_network_box, False, False)
-        self.all_network_list.pack_start(self.network_list, True, True)
+        self.all_network_list.pack_start(self.wired_network_box, False, False, 0)
+        self.all_network_list.pack_start(self.network_list, True, True, 0)
         self.network_list.show_all()
         self.status_area = self.wTree.get_object("connecting_hbox")
         self.status_bar = self.wTree.get_object("statusbar")
         menu = self.wTree.get_object("menu1")
 
-        self.status_area.hide_all()
+        self.status_area.hide()
 
         self.window.set_icon_name('wicd-gtk')
         self.statusID = None
@@ -248,7 +257,7 @@ class appGui(object):
         self._wired_showing = False
         self.network_list.set_sensitive(False)
         label = gtk.Label("%s..." % _('Scanning'))
-        self.network_list.pack_start(label)
+        self.network_list.pack_start(label, True, True, 0)
         label.show()
         self.wait_for_events(0.2)
         self.window.connect('delete_event', self.exit)
@@ -447,7 +456,7 @@ class appGui(object):
 
     def key_event(self, widget, event=None):
         """ Handle key-release-events. """
-        if event.state & gtk.gdk.CONTROL_MASK and \
+        if event.state & gdk.ModifierType.CONTROL_MASK and \
            gtk.gdk.keyval_name(event.keyval) in ["w", "q"]:
             self.exit()
 
@@ -572,9 +581,9 @@ class appGui(object):
         if self.pulse_active:
             self.pulse_active = False
             gobject.idle_add(self.all_network_list.set_sensitive, True)
-            gobject.idle_add(self.status_area.hide_all)
+            gobject.idle_add(self.status_area.hide)
         if self.statusID:
-            gobject.idle_add(self.status_bar.remove_message, 1, self.statusID)
+            gobject.idle_add(self.status_bar.remove, 1, self.statusID)
 
     def set_connecting_state(self, info):
         """ Set connecting state. """
@@ -590,7 +599,7 @@ class appGui(object):
             gobject.idle_add(self.all_network_list.set_sensitive, False)
             gobject.idle_add(self.status_area.show_all)
         if self.statusID:
-            gobject.idle_add(self.status_bar.remove_message, 1, self.statusID)
+            gobject.idle_add(self.status_bar.remove, 1, self.statusID)
         if info[0] == "wireless":
             stat = wireless.CheckWirelessConnectingMessage()
             gobject.idle_add(self.set_status, "%s: %s" % (info[1], stat))
@@ -658,7 +667,7 @@ class appGui(object):
         self._remove_items_from_vbox(self.wired_network_box)
         self._remove_items_from_vbox(self.network_list)
         label = gtk.Label("%s..." % _('Scanning'))
-        self.network_list.pack_start(label)
+        self.network_list.pack_start(label, True, True, 0)
         self.network_list.show_all()
         if wired.CheckPluggedIn() or daemon.GetAlwaysShowWiredInterface():
             printLine = True  # In this case we print a separator.
@@ -719,7 +728,7 @@ class appGui(object):
                 else:
                     printLine = True
                 tempnet = WirelessNetworkEntry(x)
-                self.network_list.pack_start(tempnet, False, False)
+                self.network_list.pack_start(tempnet, False, False, 0)
                 tempnet.connect_button.connect("clicked",
                                                self.connect, "wireless", x,
                                                tempnet)
@@ -735,7 +744,7 @@ class appGui(object):
                 label = gtk.Label(_('Wireless Kill Switch Enabled') + ".")
             else:
                 label = gtk.Label(_('No wireless networks found.'))
-            self.network_list.pack_start(label)
+            self.network_list.pack_start(label, True, True, 0)
             label.show()
         self.update_connect_buttons(force_check=True)
         self.network_list.set_sensitive(True)
@@ -863,7 +872,7 @@ class appGui(object):
             self.all_network_list.set_sensitive(False)
             if self.statusID:
                 gobject.idle_add(
-                    self.status_bar.remove_message, 1, self.statusID)
+                    self.status_bar.remove, 1, self.statusID)
             gobject.idle_add(
                 self.set_status, _('Disconnecting active connections...'))
             gobject.idle_add(self.status_area.show_all)
