@@ -781,7 +781,7 @@ class NetworkEntry(gtk.HBox):
         # Set up the VBox that goes in the gtk.Expander
         self.expander_vbox = gtk.VBox(False, 1)
         self.expander_vbox.show()
-        self.pack_end(self.expander_vbox, False, False, 0)
+        self.pack_end(self.expander_vbox, True, True, 0)
 
         # Set up the advanced settings button
         self.advanced_button = gtk.Button()
